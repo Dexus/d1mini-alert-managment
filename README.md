@@ -22,6 +22,8 @@ pio run -e receiver -t upload
 
 `include/config.h` contains credentials and is ignored by Git.
 
+GitHub Actions builds both environments on every push and pull request.
+
 ## Delivery model
 
 The project uses two reliability layers:
