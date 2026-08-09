@@ -49,6 +49,12 @@ See [`docs/mqtt-protocol.md`](docs/mqtt-protocol.md) for the protocol details.
 
 Sender wiring: [`docs/sender-hardware.md`](docs/sender-hardware.md).
 
-The Mini-DIN +5 V output is explicitly rated at max. 200 mA. Validate supply stability with the real ESP8266 hardware before production use.
+Receiver wiring, LED/buzzer MOSFET stages and USB multi-port sizing: [`docs/receiver-hardware.md`](docs/receiver-hardware.md).
 
-The initial receiver firmware uses D5/GPIO14 for the visual output and D6/GPIO12 for the optional buzzer. Both outputs are intended to drive external MOSFET stages, not LED/buzzer loads directly.
+10,000 mAh power-bank estimates and shared USB power calculations: [`docs/power-budget.md`](docs/power-budget.md).
+
+The Mini-DIN +5 V output on the Swissphone sender side is explicitly rated at max. 200 mA. Validate supply stability with the real ESP8266 sender hardware before production use.
+
+The receiver is intended to be powered through its USB connector from a regulated 5 V source. D5/GPIO14 drives the visual-alarm MOSFET and D6/GPIO12 drives the optional buzzer MOSFET; LED and buzzer loads must not be powered directly from the ESP8266 GPIO pins.
+
+For supply sizing, use 0.25 A per receiver plus at least 25% reserve. A nominal 10,000 mAh power bank is conservatively treated as approximately 6.2 Ah usable at 5 V after conversion losses. One receiver at roughly 70-100 mA standby current is therefore expected to run about 2.5-3.5 days before real-hardware validation.
