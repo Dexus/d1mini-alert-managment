@@ -2,6 +2,31 @@
 
 This document gives planning values for USB-powered alert receivers. Battery runtime is an estimate and must be verified with the actual power bank, D1 mini board, LEDs, buzzer and Wi-Fi conditions.
 
+## Power topology
+
+Each receiver uses its **own dedicated 10,000 mAh power bank**. Receivers do not share one battery.
+
+The selected power bank can provide up to **5 V / 2.1 A** on its USB output. This is far above the expected current requirement of one receiver and therefore provides generous peak-current headroom for ESP8266 Wi-Fi activity, LEDs and the optional buzzer.
+
+The receiver is still designed around a conservative maximum planning current of approximately **0.25 A**. Compared with the 2.1 A source limit, this leaves more than enough reserve:
+
+```text
+2.1 A source capability / 0.25 A receiver design budget = 8.4x headroom
+```
+
+The 2.1 A figure is a source capability, not an expected receiver draw. The receiver should normally consume much less.
+
+## USB connection
+
+Power the D1 mini through its normal 5 V USB connector. A USB multi-adapter may be used mechanically to adapt connector types or cable arrangements, but it must not combine multiple receivers onto one battery output in this design.
+
+Use a short, good-quality USB cable. Excessive cable resistance can cause voltage drop during ESP8266 Wi-Fi current peaks even when the power bank itself is capable of 2.1 A.
+
+Local decoupling close to the receiver electronics remains recommended, for example:
+
+- 470-1000 uF electrolytic or low-ESR capacitor across 5 V/GND
+- 100 nF ceramic capacitor close to the switching/output electronics
+
 ## Why 10,000 mAh is not 10,000 mAh at 5 V
 
 Most USB power banks quote capacity at the internal lithium cell voltage, typically around 3.7 V.
@@ -49,7 +74,7 @@ Using 6.2 Ah as the conservative usable capacity:
 
 A receiver with Wi-Fi and MQTT continuously connected is currently budgeted at roughly 70-100 mA while idle.
 
-Therefore a single receiver on a good 10,000 mAh power bank should be expected to run approximately **2.5 to 3.5 days in standby**.
+Therefore one receiver on its dedicated 10,000 mAh power bank should be expected to run approximately **2.5 to 3.5 days in standby**.
 
 This is intentionally a range. ESP8266 current depends on board revision, regulator losses, Wi-Fi signal quality, reconnect frequency and MQTT traffic.
 
@@ -60,7 +85,7 @@ The proposed receiver uses approximately:
 - 70-80 mA for six blue LEDs when continuously on
 - 20-40 mA for the optional active buzzer
 
-A continuous full alarm can therefore raise total current into roughly the 160-220 mA range.
+A continuous full alarm can therefore raise total current into roughly the 160-220 mA range. This is still only a small fraction of the power bank's 2.1 A output capability.
 
 Short alarm periods have little effect on multi-day runtime. A receiver that remains in alarm for hours will discharge the battery substantially faster.
 
@@ -72,40 +97,6 @@ alarm:   190 mA for 5 min
 ```
 
 The resulting daily average remains close to 90 mA, so the impact is small.
-
-## Multiple receivers from one 10,000 mAh power bank
-
-If several receivers share one power bank via a powered multi-port USB adapter or distribution hub, their current adds directly.
-
-Assuming 90 mA average per receiver:
-
-| Receivers | Total average current | Approx. runtime |
-|---:|---:|---:|
-| 1 | 90 mA | 68.9 h / 2.9 d |
-| 2 | 180 mA | 34.4 h / 1.4 d |
-| 3 | 270 mA | 23.0 h |
-| 4 | 360 mA | 17.2 h |
-| 6 | 540 mA | 11.5 h |
-| 8 | 720 mA | 8.6 h |
-
-A shared battery therefore makes sense for temporary operation, but separate power banks or mains USB power are preferable for long standby times.
-
-## USB multi-port adapter requirements
-
-For mains operation, use a regulated 5 V USB multi-port power adapter whose **total output rating** is high enough for all receivers simultaneously.
-
-Use 0.25 A per receiver as a planning value and add at least 25% reserve.
-
-Example for four receivers:
-
-```text
-4 * 0.25 A = 1.0 A
-1.0 A * 1.25 = 1.25 A minimum planning requirement
-```
-
-A 5 V / 2 A adapter is therefore a sensible minimum for four receivers.
-
-For eight receivers, use at least a quality 5 V / 3 A supply or larger.
 
 ## Power-bank auto-shutdown
 
@@ -121,13 +112,14 @@ Do not treat a consumer power bank as validated until it has completed a long-du
 
 ## Acceptance test
 
-Before field use, perform at least this power test:
+Before field use, perform at least this power test for every receiver/power-bank combination:
 
 1. Fully charge the 10,000 mAh power bank.
-2. Connect the final receiver hardware and final USB cable.
+2. Connect exactly one final receiver using the final USB cable/adapters.
 3. Keep Wi-Fi and MQTT active continuously.
-4. Trigger regular test alarms.
+4. Trigger regular test alarms with LEDs and buzzer enabled.
 5. Record start and shutdown time.
 6. Repeat with weak Wi-Fi conditions if that can occur at the installation location.
+7. Confirm the power bank never enters automatic shutdown while the receiver is idle.
 
 The measured runtime should replace the estimates in this document for the final hardware revision.
