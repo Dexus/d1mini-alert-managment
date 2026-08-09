@@ -5,11 +5,23 @@ This document defines the first receiver hardware revision for the D1 mini alert
 ## Goals
 
 - 5 V USB powered
-- compatible with a multi-port USB power adapter or power bank
+- one 10,000 mAh power bank per receiver
+- power bank output capability: 5 V / max. 2.1 A
 - blue visual alarm
 - optional 5 V active buzzer
 - ESP8266 GPIOs must not directly source LED or buzzer current
 - non-blocking firmware operation remains possible
+- receiver must remain alarm-capable while external power is present or removed
+
+## Schematics
+
+Recommended solution with a power bank that has verified charge-through / UPS behavior:
+
+![Receiver schematic with pass-through](receiver-schematic-pass-through.svg)
+
+Alternative when the selected power bank does **not** support pass-through / UPS:
+
+![Receiver schematic without pass-through](receiver-schematic-no-pass-through.svg)
 
 ## Recommended pin assignment
 
@@ -69,55 +81,62 @@ If an inductive magnetic buzzer is used instead of a piezo buzzer, add a flyback
 
 ## Receiver supply
 
-The receiver is supplied through the D1 mini USB connector. This keeps the 5 V input path simple and makes the receiver compatible with:
+Each receiver has its **own** 10,000 mAh power bank. The power bank is specified for 5 V / max. 2.1 A output, which provides substantial current headroom for a receiver whose expected continuous full-alarm load is only a few hundred milliamps.
 
-- normal USB wall adapters
-- multi-port USB chargers
-- USB power banks
-- powered USB distribution hubs
+The 2.1 A rating is the maximum available current, not the normal receiver current. Battery runtime is determined by the average load and usable battery energy.
 
-Recommended supply capability per receiver:
+### Preferred: verified pass-through / UPS power bank
 
-- minimum: 5 V / 500 mA available per port
-- preferred: 5 V / 1 A available per port
+If the power bank supports charge-through / UPS operation and its output stays continuously present while the charger is connected, disconnected or reconnects, use:
 
-The receiver normally consumes much less than 500 mA. The margin is intentional for ESP8266 Wi-Fi current peaks, LED load and buzzer load.
+```text
+USB charger -> power bank charge input
+power bank 5 V output -> D1 mini USB / receiver 5 V rail
+```
 
-## Multi-port USB power
+The power bank must be tested for:
 
-For multiple receivers from one adapter, dimension the adapter for the sum of all possible receiver loads, not only their idle load.
+- charging while the receiver remains powered
+- no 5 V interruption when charger power is connected
+- no 5 V interruption when charger power is removed
+- no ESP8266 reset during either transition
+- no automatic output shutdown during normal idle operation
 
-Recommended planning value:
+Marketing terms such as "pass-through charging" are not sufficient by themselves. The actual unit must pass the transition test.
 
-- 0.25 A per receiver for sizing
-- plus at least 25% reserve
+### Alternative: power bank without pass-through / UPS
 
-Examples:
+Do **not** connect a normal USB charger output and the power-bank output directly in parallel.
 
-| Receivers | Planning current | Recommended adapter |
-|---:|---:|---:|
-| 1 | 0.25 A | 5 V / 1 A or larger |
-| 2 | 0.50 A | 5 V / 1 A or larger |
-| 4 | 1.00 A | 5 V / 2 A or larger |
-| 6 | 1.50 A | 5 V / 2.5-3 A or larger |
-| 8 | 2.00 A | 5 V / 3 A or larger |
+If the power bank cannot charge and supply the receiver at the same time, add an external 5 V power-path / load-sharing stage. Its task is:
 
-A passive USB splitter does not create additional power capacity. The upstream 5 V source must be rated for the total load.
+```text
+                     +------------------+
+USB charger 5 V ---->|                  |
+                     |  5 V POWER PATH  |----> 5 V SYS -> receiver
+Powerbank 5 V ------>| / ideal-diode    |
+                     | / load sharing   |
+                     +------------------+
+```
 
-Do not parallel multiple unrelated 5 V USB supplies into the same receiver or splitter. This can cause backfeeding between supplies.
+The external stage must prevent backfeeding between the charger and power bank and provide a clean 5 V system rail during source transitions.
+
+A suitable implementation can be a purpose-built 5 V UPS/load-sharing module or an ideal-diode/power-mux circuit designed for the required voltage and current. Do not assume a bare TP4056 charger module provides this function; a basic TP4056 board is a single-cell Li-ion charger and is not by itself a 5 V UPS power path.
+
+With this alternative, the power bank can be charged separately when disconnected from the receiver, or a proper external power-path architecture can handle source selection. The latter is the preferred option if "always alarm-capable" is mandatory.
 
 ## Local decoupling
 
-Even when powered by a good USB adapter, add local supply buffering close to the receiver electronics:
+Add local supply buffering close to the receiver electronics:
 
-- 470-1000 uF electrolytic or low-ESR capacitor between 5 V and GND
+- 1000 uF low-ESR electrolytic capacitor between 5 V and GND
 - 100 nF ceramic capacitor between 5 V and GND
 
-This is especially useful with long or thin USB cables.
+For source-switching experiments without guaranteed seamless transfer, 1000-2200 uF can help with short transients, but a capacitor is not a replacement for a proper power-path circuit.
 
 ## Cable voltage drop
 
-Cheap or long USB cables can cause more trouble than the power adapter itself. For alarm receivers use short, low-resistance cables. If the receiver resets while LEDs or buzzer are active, measure 5 V directly at the D1 mini under load.
+Cheap or long USB cables can cause more trouble than the power source itself. Use short, low-resistance cables. If the receiver resets while LEDs or buzzer are active, measure the 5 V rail directly at the D1 mini under load.
 
 ## Approximate current budget
 
@@ -131,6 +150,8 @@ Typical design estimate for one receiver:
 | Total, idle | about 70-100 mA |
 | Total, full continuous alarm | about 160-220 mA |
 
+For electrical design, allow at least 300 mA continuous receiver capacity plus margin for ESP8266 Wi-Fi peaks. A 5 V / 2.1 A power bank per receiver therefore has ample current capability.
+
 Actual hardware must be measured. The values above are engineering estimates for supply sizing, not guaranteed component specifications.
 
 ## Recommended prototype BOM
@@ -138,21 +159,28 @@ Actual hardware must be measured. The values above are engineering estimates for
 - 1x D1 mini ESP8266
 - 6x blue 5 mm LED
 - 6x 150 ohm resistor, 0.25 W
-- 2x AO3400A or another 3.3 V logic-level N-MOSFET
+- 2x AO3400A or another MOSFET specified to switch the required current well at 3.3 V gate drive
 - 2x 100 ohm gate resistor
 - 2x 10 kohm gate pulldown resistor
 - 1x optional 5 V active buzzer
-- 1x 470-1000 uF capacitor
+- 1x 1000 uF low-ESR capacitor
 - 1x 100 nF ceramic capacitor
-- USB cable with low resistance
+- 1x short low-resistance USB cable
+- 1x 10,000 mAh / 5 V 2.1 A power bank per receiver
+- optional: 5 V power-path / ideal-diode / UPS module if the power bank has no verified pass-through function
 
-## Next verification step
+## Acceptance test
 
-Before fixing a PCB layout, measure one assembled receiver in these states:
+Before fixing a PCB layout, test one complete receiver in these states:
 
 1. Wi-Fi + MQTT connected, no alarm
 2. LEDs continuously on
 3. buzzer continuously on
 4. LEDs + buzzer on while MQTT traffic is active
+5. charger connected while receiver is running
+6. charger removed while receiver is running
+7. charger reconnected while receiver is running
+8. receiver remains online and does not reboot through all source transitions
+9. long idle test verifies that the power bank does not auto-shutdown
 
-Record both average current and minimum 5 V rail voltage at the D1 mini.
+Record average current, minimum 5 V rail voltage and any ESP reset/reconnect events.
