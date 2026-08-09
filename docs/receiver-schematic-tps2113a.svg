@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860">
+  <style>
+    .title{font:700 30px sans-serif}.h{font:700 20px sans-serif}.t{font:16px sans-serif}.s{font:14px sans-serif}.box{fill:#fff;stroke:#222;stroke-width:2}.power{stroke:#d22;stroke-width:4;fill:none}.gnd{stroke:#222;stroke-width:3;fill:none}.sig{stroke:#1677b8;stroke-width:3;fill:none}.note{fill:#f7f7f7;stroke:#888;stroke-width:1.5}.good{fill:#eef9ee;stroke:#348a34;stroke-width:2}.warn{fill:#fff5e8;stroke:#d47b00;stroke-width:2}
+  </style>
+  <rect width="1400" height="860" fill="#fff"/>
+  <text x="35" y="48" class="title">D1 mini Alarm Receiver – Universal 5 V UPS-Pfad mit TPS2113A</text>
+  <text x="35" y="78" class="t">Für handelsübliche Powerbanks ohne Pass-Through: Netzteil versorgt den Receiver direkt und lädt gleichzeitig die Powerbank.</text>
+
+  <rect x="55" y="135" width="230" height="130" rx="10" class="box"/>
+  <text x="80" y="170" class="h">USB-Netzteil 5 V</text>
+  <text x="80" y="202" class="t">aus Multi-Port-Lader</text>
+  <text x="80" y="232" class="t">5 V / GND</text>
+
+  <rect x="55" y="365" width="280" height="175" rx="10" class="box"/>
+  <text x="80" y="400" class="h">10.000 mAh Powerbank</text>
+  <text x="80" y="435" class="t">USB IN = laden</text>
+  <text x="80" y="470" class="t">USB OUT = 5 V / max. 2,1 A</text>
+  <text x="80" y="505" class="s">Kein Pass-Through erforderlich</text>
+
+  <rect x="485" y="245" width="330" height="300" rx="12" class="good"/>
+  <text x="530" y="285" class="h">TPS2113A (TSSOP-8)</text>
+  <text x="515" y="325" class="t">8 IN1  ← Netzteil 5 V</text>
+  <text x="515" y="358" class="t">6 IN2  ← Powerbank OUT</text>
+  <text x="515" y="391" class="t">7 OUT  → 5V_SYS</text>
+  <text x="515" y="424" class="t">2 EN   → GND</text>
+  <text x="515" y="457" class="t">4 ILIM → 680 Ω → GND</text>
+  <text x="515" y="490" class="t">3 VSNS ← 45,3k / 10k Teiler</text>
+  <text x="515" y="523" class="t">5 GND  → GND</text>
+
+  <rect x="930" y="270" width="365" height="240" rx="12" class="box"/>
+  <text x="970" y="310" class="h">Receiver 5V_SYS</text>
+  <text x="970" y="350" class="t">D1 mini / ESP8266</text>
+  <text x="970" y="383" class="t">D5/GPIO14 → LED-MOSFET</text>
+  <text x="970" y="416" class="t">D6/GPIO12 → Summer-MOSFET</text>
+  <text x="970" y="449" class="t">47–100 µF am MUX-OUT</text>
+  <text x="970" y="482" class="t">+ 470–1000 µF nahe D1 mini</text>
+
+  <!-- wall split -->
+  <path d="M285 185 H405 V320 H485" class="power"/>
+  <text x="345" y="168" class="s">Pfad A: Receiver</text>
+  <path d="M405 185 V420 H335" class="power"/>
+  <text x="340" y="405" class="s">Pfad B: Powerbank laden</text>
+
+  <!-- powerbank out to IN2 -->
+  <path d="M335 485 H430 V355 H485" class="power"/>
+  <text x="350" y="505" class="s">USB OUT 5 V</text>
+
+  <!-- mux out -->
+  <path d="M815 390 H930" class="power"/>
+  <text x="840" y="372" class="h" fill="#d22">5V_SYS</text>
+
+  <!-- ground rail -->
+  <path d="M115 570 H1230" class="gnd"/>
+  <text x="80" y="576" class="h">GND</text>
+  <path d="M170 265 V570 M170 540 V570 M650 545 V570 M1110 510 V570" class="gnd"/>
+
+  <!-- VSNS divider -->
+  <path d="M405 320 H435" class="sig"/>
+  <rect x="425" y="585" width="390" height="145" rx="10" class="note"/>
+  <text x="450" y="618" class="h">Netzpriorität / VSNS</text>
+  <text x="450" y="650" class="t">IN1 ─ 45,3 kΩ ─┬─ VSNS</text>
+  <text x="450" y="680" class="t">               └─ 10 kΩ ─ GND</text>
+  <text x="450" y="710" class="t">Umschaltziel ≈ 4,42 V</text>
+
+  <rect x="55" y="625" width="315" height="150" rx="10" class="warn"/>
+  <text x="80" y="660" class="h">Wichtig</text>
+  <text x="80" y="695" class="t">Netzteil-5 V und Powerbank-OUT</text>
+  <text x="80" y="725" class="t">niemals direkt parallel verbinden.</text>
+  <text x="80" y="755" class="t">Der TPS2113A übernimmt das ORing.</text>
+
+  <rect x="880" y="610" width="455" height="175" rx="10" class="good"/>
+  <text x="910" y="646" class="h">Betrieb</text>
+  <text x="910" y="680" class="t">Netz vorhanden → IN1 versorgt Receiver</text>
+  <text x="910" y="710" class="t">gleichzeitig lädt Powerbank über USB IN</text>
+  <text x="910" y="740" class="t">Netz weg → IN2 / Powerbank übernimmt</text>
+  <text x="910" y="770" class="t">ohne bewusstes Abschalten des D1 mini</text>
+</svg>
